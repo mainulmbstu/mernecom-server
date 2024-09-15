@@ -276,15 +276,17 @@ const orderCheckout = async (req, res) => {
     let total = 0;
     cart.map((item) => (total += item?.price));
     let trxn_id = "DEMO" + uuidv4();
-    let baseUrl = "http://localhost:8000"; // has been changed after deployment
+
+    // let baseurl = "http://localhost:8000"; // has been changed after deployment
+    let baseurl = "https://mernecom-server.onrender.com"; // has been changed after deployment
     
     const data = {
       total_amount: total,
       currency: "BDT",
       tran_id: trxn_id, // use unique tran_id for each api call
-      success_url: `http://localhost:8000/products/payment/success/${trxn_id}`,
-      fail_url: `http://localhost:8000/products/payment/fail/${trxn_id}`,
-      cancel_url: `http://localhost:8000/products/payment/fail/${trxn_id}`,
+      success_url: `${baseurl}/products/payment/success/${trxn_id}`,
+      fail_url: `${baseurl}/products/payment/fail/${trxn_id}`,
+      cancel_url: `${baseurl}/products/payment/fail/${trxn_id}`,
       ipn_url: "http://localhost:3030/ipn",
       shipping_method: "Courier",
       product_name: "Multi",

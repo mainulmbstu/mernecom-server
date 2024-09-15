@@ -32,7 +32,10 @@ router.delete('/delete-product/:pid', loginMiddleware, adminMiddleware, productC
 
 router.post("/order/checkout", loginMiddleware, productControlls.orderCheckout);
 router.post("/payment/success/:trxn_id",productControlls.orderSuccess);
-router.post("/payment/fail/:trxn_id",productControlls.orderFail);
+router.post(
+  "https://mernecom-server.onrender.com/products/payment/fail/:trxn_id",
+  productControlls.orderFail
+);
 
 
 

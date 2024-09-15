@@ -281,9 +281,9 @@ const orderCheckout = async (req, res) => {
       total_amount: total,
       currency: "BDT",
       tran_id: trxn_id, // use unique tran_id for each api call
-      success_url: `http://localhost:8000/products/payment/success/${trxn_id}`,
-      fail_url: `http://localhost:8000/products/payment/fail/${trxn_id}`,
-      cancel_url: `http://localhost:8000/products/payment/fail/${trxn_id}`,
+      success_url: `${process.env.BASE_URL}/products/payment/success/${trxn_id}`,
+      fail_url: `${process.env.BASE_URL}/products/payment/fail/${trxn_id}`,
+      cancel_url: `${process.env.BASE_URL}/products/payment/fail/${trxn_id}`,
       ipn_url: "http://localhost:3030/ipn",
       shipping_method: "Courier",
       product_name: "Multi",

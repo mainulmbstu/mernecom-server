@@ -10,7 +10,7 @@ const multer = require("multer");
 
 
 const corsOption = {
-  // origin: process.env.FRONT_URL,
+  origin: process.env.FRONT_URL,
   method: "GET, POST, PATCH, PUT, DELETE, HEAD",
   Credentials: true,
 };

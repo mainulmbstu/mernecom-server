@@ -47,22 +47,29 @@ let userStatusUpdate = async (req, res) => {
 
 const orderList = async (req, res) => {
   try {
+    let page = req.query.page?req.query.page:1
+    let size = req.query.size ? req.query.size : 5;
+    let skip = (page - 1) * size
+    console.log(req.query);
      await OrderModel.deleteMany({ 'payment.status': false })
+    const total = await OrderModel.find({}).estimatedDocumentCount()
     const orderList = await OrderModel.find({})
-      .populate('user', { password: 0 })
-      .populate('products')
-      .populate({
-        path: 'products',
-        populate:( {
-          path:'category'
-        })
+    .populate('user', { password: 0 })
+    .skip(skip)
+    .limit(size)
+    .populate('products')
+    .populate({
+      path: 'products',
+      populate:( {
+        path:'category'
       })
+    })
     .sort({createdAt:-1})
     
     if (!orderList || orderList.length === 0) {
       return res.status(400).send({msg:"No data found"});
     }
-    res.status(200).send({orderList});
+    res.status(200).send({orderList, total, page, size});
   } catch (error) {
     res.status(401).json({ msg: "error from orderList", error });
   }

@@ -49,25 +49,7 @@ const createProduct = async (req, res) => {
     res.status(500).send({ msg: "error from product create", error });
   }
 };
-//=========================================
-const productList = async (req, res) => {
-  try {
-    const products = await ProductModel.find({})
-      // .select({ picture: 0 })
-      .populate("category")
-      .populate("user", { password: 0 })
-      // .limit(2)
-      .sort({ updatedAt: -1 });
 
-    if (!products || products.length === 0) {
-      return res.status(400).send("No data found");
-    }
-    res.status(200).send(products);
-  } catch (error) {
-    console.log(error);
-    res.status(401).send({ msg: "error from product List", error });
-  }
-};
 //=========================================
 const productByCategory = async (req, res) => {
   try {
@@ -96,36 +78,10 @@ const moreInfo = async (req, res) => {
     res.status(200).send({ msg: "got product from search", products });
   } catch (error) {
     console.log(error);
-    res.status(401).send({ msg: "error from product List", error });
+    res.status(401).send({ msg: "error from moreInfo", error });
   }
 };
-//=========================================
-const productCount = async (req, res) => {
-  try {
-    const total = await ProductModel.find({}).estimatedDocumentCount();
-    res.status(200).send({ msg: "got total count", total });
-  } catch (error) {
-    console.log(error);
-    res.status(401).send({ msg: "error from product count", error });
-  }
-};
-//=========================================
-const productListPerPage = async (req, res) => {
-  try {
-    const perPage = 4;
-    const page = req.params.page ? req.params.page : 1;
-    const products = await ProductModel.find({})
-      .skip((page - 1) * perPage)
-      .populate("category")
-      .populate("user", { password: 0 })
-      .limit(perPage)
-      .sort({ updatedAt: -1 });
-    res.status(200).send({ msg: "got product per page", products });
-  } catch (error) {
-    console.log(error);
-    res.status(401).send({ msg: "error from productListPerPage", error });
-  }
-};
+
 //==========================================
 const productSearch = async (req, res) => {
   try {
@@ -159,33 +115,34 @@ const similarProducts = async (req, res) => {
     res.status(200).send({ msg: "got product from search", products });
   } catch (error) {
     console.log(error);
-    res.status(401).send({ msg: "error from productSearch", error });
+    res.status(401).send({ msg: "error from similarProducts", error });
   }
 };
 //============================================
 const productFilter = async (req, res) => {
   try {
-    const { checkedCat, priceCat } = req.body;
+    const { checkedCat, priceCat, pageOrSize } = req.body;
+    let page = pageOrSize?.page;
+    let size = pageOrSize?.size
+    let skip = (page - 1) * size;
+    console.log(page);
     let args = {};
     if (checkedCat.length > 0) args.category = checkedCat;
     if (priceCat.length > 0)
       args.price = { $gte: priceCat[0], $lte: priceCat[1] };
+    const total = (await ProductModel.find(args)).length
     const products = await ProductModel.find(args)
-      // .select({ picture: 0 })
+      .skip(skip)
+      .limit(size)
       .populate("category")
-      .populate("user", { password: 0 })
-      // .limit(2)
       .sort({ updatedAt: -1 });
 
-    // if (!products || products.length === 0) {
-    //   return res.status(403).json({success:false, msg:"No data found in this category", products});
-    // }
-    res.status(200).send({ success: true, products });
+    res.status(200).send({ success: true, products,total });
   } catch (error) {
     console.log(error);
     res
       .status(401)
-      .send({ success: false, msg: "error from product List", error });
+      .send({ success: false, msg: "error from productFilter", error });
   }
 };
 //===========================================
@@ -250,7 +207,7 @@ const updateProduct = async (req, res) => {
       .send({ success: false, msg: "error from product update", error });
   }
 };
-
+//=================================================================
 let deleteProduct = async (req, res) => {
   try {
     let pid = req.params.pid;
@@ -264,7 +221,7 @@ let deleteProduct = async (req, res) => {
     await ProductModel.findByIdAndDelete(pid);
     res.status(200).send({ msg: "Product deleted successfully" });
   } catch (error) {
-    res.status(401).send({ msg: "error from delete Category", error });
+    res.status(401).send({ msg: "error from deleteProduct", error });
   }
 };
 
@@ -279,7 +236,7 @@ const orderCheckout = async (req, res) => {
 
     // let baseurl = "http://localhost:8000"; // has been changed after deployment
     let baseurl = "https://mernecom-server.onrender.com"; // has been changed after deployment
-    
+
     const data = {
       total_amount: total,
       currency: "BDT",
@@ -339,7 +296,7 @@ const orderCheckout = async (req, res) => {
     console.log(error);
     res
       .status(401)
-      .send({ success: false, msg: "error from product order", error });
+      .send({ success: false, msg: "error from orderCheckout", error });
   }
 };
 //=============================================================
@@ -380,19 +337,37 @@ const orderFail = async (req, res) => {
     console.log(error);
     res
       .status(500)
-      .send({ success: false, msg: "error from orderSuccess", error });
+      .send({ success: false, msg: "error from orderFail", error });
+  }
+};
+//==============================================================
+const productListLimit = async (req, res) => {
+  try {
+    let page = req.query.page ? req.query.page : 1;
+    let size = req.query.size ? req.query.size : 5;
+    let skip = (page - 1) * size;
+    const total = await ProductModel.find({}).estimatedDocumentCount();
+
+    const products = await ProductModel.find({})
+      .skip(skip)
+      .limit(size)
+      .populate("category")
+      .sort({ createdAt: -1 });
+    if (!products || products.length === 0) {
+      return res.status(400).send({ msg: "No data found" });
+    }
+    res.status(200).send({ products, total });
+  } catch (error) {
+    res.status(401).json({ msg: "error from productListLimit", error });
   }
 };
 
 module.exports = {
   createProduct,
-  productList,
   singleProduct,
   updateProduct,
   deleteProduct,
   productFilter,
-  productCount,
-  productListPerPage,
   productSearch,
   similarProducts,
   moreInfo,
@@ -400,4 +375,5 @@ module.exports = {
   orderCheckout,
   orderSuccess,
   orderFail,
+  productListLimit,
 };

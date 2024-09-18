@@ -13,10 +13,9 @@ router.get("/category/:slug", productControlls.productByCategory);
 router.post("/product-filter", productControlls.productFilter);
 
 router.get("/more-info/:pid", productControlls.moreInfo);
-//=============product count
-router.get("/product-count", productControlls.productCount);
-//product per page
-router.get("/product-list-per-page/:page", productControlls.productListPerPage);
+//=============product list
+
+router.get("/product-list-limit", productControlls.productListLimit);
 //search
 router.get("/search/:keyword", productControlls.productSearch);
 //simila products
@@ -26,16 +25,12 @@ router.post('/update-product/:pid', upload.single('picture'), loginMiddleware, a
 
 router.delete('/delete-product/:pid', loginMiddleware, adminMiddleware, productControlls.deleteProduct)
 
-// router.patch('/update-category/:id', loginMiddleware, adminMiddleware, categoryControlls.updateCategory)
 
 // ============== checkout ========================================
 
 router.post("/order/checkout", loginMiddleware, productControlls.orderCheckout);
 router.post("/payment/success/:trxn_id",productControlls.orderSuccess);
-router.post(
-  "/payment/fail/:trxn_id",
-  productControlls.orderFail
-);
+router.post("/payment/fail/:trxn_id", productControlls.orderFail);
 
 
 

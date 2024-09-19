@@ -136,7 +136,6 @@ const productFilter = async (req, res) => {
     let page = pageOrSize?.page;
     let size = pageOrSize?.size;
     let skip = (page - 1) * size;
-    console.log(page);
 
     let args = {};
     if (checkedCat.length > 0) args.category = checkedCat;

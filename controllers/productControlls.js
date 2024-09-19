@@ -75,7 +75,7 @@ const moreInfo = async (req, res) => {
     const { pid } = req.params;
     const products = await ProductModel.find({ _id: pid }).populate("category");
 
-    res.status(200).send({ msg: "got product from search", products });
+    res.status(200).send({ msg: "got product moreInfo", products });
   } catch (error) {
     console.log(error);
     res.status(401).send({ msg: "error from moreInfo", error });
@@ -85,23 +85,34 @@ const moreInfo = async (req, res) => {
 //==========================================
 const productSearch = async (req, res) => {
   try {
-    const { keyword } = req.params;
+    const { keyword, page, size } = req.query;
+    let skip = (page - 1) * size;
+    const total = await ProductModel.find({
+      $or: [
+        { name: { $regex: keyword, $options: "i" } },
+        { description: { $regex: keyword, $options: "i" } },
+      ],
+    });
+
     const products = await ProductModel.find({
       $or: [
         { name: { $regex: keyword, $options: "i" } },
         { description: { $regex: keyword, $options: "i" } },
       ],
     })
+      .skip(skip)
+      .limit(size)
       .populate("category")
-      .limit(6)
       .sort({ updatedAt: -1 });
-    res.status(200).send({ msg: "got product from search", products });
+    res
+      .status(200)
+      .send({ msg: "got product from search", products, total: total.length });
   } catch (error) {
     console.log(error);
     res.status(401).send({ msg: "error from productSearch", error });
   }
 };
-//=================================================================
+//===============================================================
 const similarProducts = async (req, res) => {
   try {
     const { pid, cid } = req.params;
@@ -123,21 +134,22 @@ const productFilter = async (req, res) => {
   try {
     const { checkedCat, priceCat, pageOrSize } = req.body;
     let page = pageOrSize?.page;
-    let size = pageOrSize?.size
+    let size = pageOrSize?.size;
     let skip = (page - 1) * size;
     console.log(page);
+
     let args = {};
     if (checkedCat.length > 0) args.category = checkedCat;
     if (priceCat.length > 0)
       args.price = { $gte: priceCat[0], $lte: priceCat[1] };
-    const total = (await ProductModel.find(args)).length
+    const total = (await ProductModel.find(args)).length;
     const products = await ProductModel.find(args)
       .skip(skip)
       .limit(size)
       .populate("category")
       .sort({ updatedAt: -1 });
 
-    res.status(200).send({ success: true, products,total });
+    res.status(200).send({ success: true, products, total });
   } catch (error) {
     console.log(error);
     res
@@ -197,7 +209,7 @@ const updateProduct = async (req, res) => {
     let updatedProduct = await product.save();
     res.status(201).send({
       success: true,
-      msg: "product updated successfully",
+      msg: "product updated successfully, refresh to view",
       updatedProduct,
     });
   } catch (error) {
@@ -344,10 +356,9 @@ const orderFail = async (req, res) => {
 const productListLimit = async (req, res) => {
   try {
     let page = req.query.page ? req.query.page : 1;
-    let size = req.query.size ? req.query.size : 5;
+    let size = req.query.size ? req.query.size : 4;
     let skip = (page - 1) * size;
     const total = await ProductModel.find({}).estimatedDocumentCount();
-
     const products = await ProductModel.find({})
       .skip(skip)
       .limit(size)

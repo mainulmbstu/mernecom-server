@@ -17,7 +17,7 @@ router.get("/more-info/:pid", productControlls.moreInfo);
 
 router.get("/product-list-limit", productControlls.productListLimit);
 //search
-router.get("/search/:keyword", productControlls.productSearch);
+router.get("/search", productControlls.productSearch);
 //simila products
 router.get("/search/similar/:pid/:cid", productControlls.similarProducts);
 

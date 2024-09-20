@@ -22,6 +22,10 @@ const register = async (req, res) => {
     if (userExist) {
       return res.status(400).send({ msg: "User already exist" });
     }
+    const mobileExist = await UserModel.findOne({ phone });
+    if (mobileExist) {
+      return res.status(400).send({ msg: "Mobile number already exist" });
+    }
     let hashedPass = await bcrypt.hash(password, 10);
       const newUser = await UserModel.create({ name, email, password: hashedPass, phone, address, answer });
       res.status(201).send({ msg: "Registered successfully" });

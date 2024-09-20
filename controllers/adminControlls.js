@@ -46,7 +46,7 @@ let userStatusUpdate = async (req, res) => {
 const orderList = async (req, res) => {
   try {
     let page = req.query.page ? req.query.page : 1;
-    let size = req.query.size ? req.query.size : 5;
+    let size = req.query.size ? req.query.size : 4;
     let skip = (page - 1) * size;
     await OrderModel.deleteMany({ "payment.status": false });
     const total = await OrderModel.find({}).estimatedDocumentCount();
@@ -101,13 +101,68 @@ const adminProductList = async (req, res) => {
       .limit(size)
       .populate("user", { password: 0 })
       .populate("category")
-      .sort({ createdAt: -1 });
+      .sort({ updatedAt: -1 });
     if (!products || products.length === 0) {
       return res.status(400).send({ msg: "No data found" });
     }
     res.status(200).send({ products, total });
   } catch (error) {
     res.status(401).json({ msg: "error from orderList", error });
+  }
+};
+
+//========================================================
+
+const orderSearch = async (req, res) => {
+  try {
+    const { keyword } = req.query;
+    let page = req.query?.page ? req.query?.page : 1;
+    let size = req.query?.size ? req.query?.size : 4;
+    let skip = (page - 1) * size;
+    const searchUser = await UserModel.find(
+      {
+        $or: [
+          { email: { $regex: keyword, $options: "i" } },
+          { phone: { $regex: keyword, $options: "i" } },
+        ],
+      },
+      { name: 1, _id: 1, email: 1 }
+    );
+
+    const total = await OrderModel.find({
+      $or: [
+        { status: { $regex: keyword, $options: "i" } },
+        { user: searchUser[0]?._id },
+      ],
+    });
+    const searchOrders = await OrderModel.find({
+      $or: [
+        { status: { $regex: keyword, $options: "i" } },
+        { user: searchUser[0]?._id },
+      ],
+    })
+      .skip(skip)
+      .limit(size)
+      .populate("user", { password: 0, answer: 0 })
+      .populate("products")
+      .populate({
+        path: "products",
+        populate: {
+          path: "category",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    res
+      .status(200)
+      .send({
+        msg: "got orders from search",
+        total: total.length,
+        searchOrders,
+      });
+  } catch (error) {
+    console.log(error);
+    res.status(401).send({ msg: "error from orderSearch", error });
   }
 };
 
@@ -118,4 +173,5 @@ module.exports = {
   orderList,
   orderStatusUpdate,
   adminProductList,
+  orderSearch,
 };

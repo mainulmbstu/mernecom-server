@@ -53,17 +53,17 @@ const createProduct = async (req, res) => {
 //=========================================
 const productByCategory = async (req, res) => {
   try {
-    const category = await CategoryModel.findOne({ slug: req.params.slug });
-    const products = await ProductModel.find({ category })
-      // .select({ picture: 0 })
-      .populate("category")
-      // .limit(2)
-      .sort();
+    const { page, size } = req.query;
+    let skip = (page - 1) * size;
 
-    if (!products || products.length === 0) {
-      return res.status(400).send({ msg: "No data found" });
-    }
-    res.status(200).send({ products });
+    const category = await CategoryModel.findOne({ slug: req.params.slug });
+    const total = await ProductModel.find({ category })
+    const products = await ProductModel.find({ category })
+      .skip(skip)
+      .limit(size)
+    .populate("category")
+    
+    res.status(200).send({ products, total });
   } catch (error) {
     console.log(error);
     res.status(401).send({ msg: "error from productByCategory", error });
@@ -93,7 +93,6 @@ const productSearch = async (req, res) => {
         { description: { $regex: keyword, $options: "i" } },
       ],
     });
-
     const products = await ProductModel.find({
       $or: [
         { name: { $regex: keyword, $options: "i" } },
@@ -121,7 +120,7 @@ const similarProducts = async (req, res) => {
       _id: { $ne: pid },
     })
       .populate("category")
-      .limit(6)
+      .limit(12)
       .sort({ updatedAt: -1 });
     res.status(200).send({ msg: "got product from search", products });
   } catch (error) {
@@ -136,7 +135,6 @@ const productFilter = async (req, res) => {
     let page = pageOrSize?.page;
     let size = pageOrSize?.size;
     let skip = (page - 1) * size;
-
     let args = {};
     if (checkedCat.length > 0) args.category = checkedCat;
     if (priceCat.length > 0)

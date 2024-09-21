@@ -6,6 +6,7 @@ const adminControlls = require("../controllers/adminControlls");
 const router = express.Router();
 
 router.get('/user-list', loginMiddleware, adminMiddleware, adminControlls.userList  )
+router.get('/user-search', loginMiddleware, adminMiddleware, adminControlls.searchUser  )
 router.get('/order-list', loginMiddleware, adminMiddleware, adminControlls.orderList  )
 router.delete('/user/:id', loginMiddleware, adminMiddleware, adminControlls.deleteUser  )
 router.post('/user/status/:id', loginMiddleware, adminMiddleware, adminControlls.userStatusUpdate  )

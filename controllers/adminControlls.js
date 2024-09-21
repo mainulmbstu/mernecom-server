@@ -3,16 +3,53 @@ const { OrderModel } = require("../models/OrderModel");
 const { ProductModel } = require("../models/productModel");
 
 const userList = async (req, res) => {
+try {
+  let page = req.query.page ? req.query.page : 1;
+  let size = req.query.size ? req.query.size : 4;
+  let skip = (page - 1) * size;
+
+  const total = await UserModel.find({}).estimatedDocumentCount();
+
+  const userList = await UserModel.find({}, { password: 0, answer: 0 })
+    .skip(skip)
+    .limit(size)
+    .sort({ updatedAt: -1 });
+  if (!userList || userList.length === 0) {
+    return res.status(400).send({ msg: "No data found" });
+  }
+  res.status(200).send({ userList, total });
+
+} catch (error) {
+  res.status(401).json({ msg: "error from user list", error });
+}
+};
+//===============================================================
+const searchUser = async (req, res) => {
   try {
-    const userList = await UserModel.find({}, { password: 0 });
-    if (!userList || userList.length === 0) {
-      return res.status(400).send("No data found");
-    }
-    res.status(200).send(userList);
+    const { keyword } = req.query;
+    let page = req.query?.page ? req.query?.page : 1;
+    let size = req.query?.size ? req.query?.size : 4;
+    let skip = (page - 1) * size;
+    const searchUser = await UserModel.find(
+      {
+        $or: [
+          { email: { $regex: keyword, $options: "i" } },
+          { phone: { $regex: keyword, $options: "i" } },
+        ],
+      },
+      { password: 0, answer: 0 }
+    );
+    res.status(200).send({
+      msg: "got user from search",
+      searchUser,
+      total:searchUser.length
+    });
   } catch (error) {
-    res.status(401).json({ msg: "error from user list", error });
+    console.log(error);
+    res.status(401).send({ msg: "error from userSearch", error });
   }
 };
+//======================================================================
 
 let deleteUser = async (req, res) => {
   try {
@@ -91,7 +128,7 @@ let orderStatusUpdate = async (req, res) => {
 const adminProductList = async (req, res) => {
   try {
     let page = req.query.page ? req.query.page : 1;
-    let size = req.query.size ? req.query.size : 5;
+    let size = req.query.size ? req.query.size : 4;
     let skip = (page - 1) * size;
 
     const total = await ProductModel.find({}).estimatedDocumentCount();
@@ -174,4 +211,5 @@ module.exports = {
   orderStatusUpdate,
   adminProductList,
   orderSearch,
+  searchUser,
 };

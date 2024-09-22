@@ -3,25 +3,24 @@ const { OrderModel } = require("../models/OrderModel");
 const { ProductModel } = require("../models/productModel");
 
 const userList = async (req, res) => {
-try {
-  let page = req.query.page ? req.query.page : 1;
-  let size = req.query.size ? req.query.size : 4;
-  let skip = (page - 1) * size;
+  try {
+    let page = req.query.page ? req.query.page : 1;
+    let size = req.query.size ? req.query.size : 4;
+    let skip = (page - 1) * size;
 
-  const total = await UserModel.find({}).estimatedDocumentCount();
+    const total = await UserModel.find({}).estimatedDocumentCount();
 
-  const userList = await UserModel.find({}, { password: 0, answer: 0 })
-    .skip(skip)
-    .limit(size)
-    .sort({ updatedAt: -1 });
-  if (!userList || userList.length === 0) {
-    return res.status(400).send({ msg: "No data found" });
+    const userList = await UserModel.find({}, { password: 0, answer: 0 })
+      .skip(skip)
+      .limit(size)
+      .sort({ updatedAt: -1 });
+    if (!userList || userList.length === 0) {
+      return res.status(400).send({ msg: "No data found" });
+    }
+    res.status(200).send({ userList, total });
+  } catch (error) {
+    res.status(401).json({ msg: "error from user list", error });
   }
-  res.status(200).send({ userList, total });
-
-} catch (error) {
-  res.status(401).json({ msg: "error from user list", error });
-}
 };
 //===============================================================
 const searchUser = async (req, res) => {
@@ -38,11 +37,13 @@ const searchUser = async (req, res) => {
         ],
       },
       { password: 0, answer: 0 }
-    );
+    )
+      .skip(skip)
+      .limit(size);
     res.status(200).send({
       msg: "got user from search",
       searchUser,
-      total:searchUser.length
+      total: searchUser.length,
     });
   } catch (error) {
     console.log(error);
@@ -148,6 +149,44 @@ const adminProductList = async (req, res) => {
   }
 };
 
+//=============================================
+
+const adminSearchProductList = async (req, res) => {
+  try {
+    const { keyword } = req.query;
+    let page = req.query?.page ? req.query?.page : 1;
+    let size = req.query?.size ? req.query?.size : 4;
+    let skip = (page - 1) * size;
+
+    const totalSearch = await ProductModel.find(
+      {
+        $or: [
+          { name: { $regex: keyword, $options: "i" } },
+          { description: { $regex: keyword, $options: "i" } },
+        ],
+      },
+    )
+    const searchProduct = await ProductModel.find(
+      {
+        $or: [
+          { name: { $regex: keyword, $options: "i" } },
+          { description: { $regex: keyword, $options: "i" } },
+        ],
+      },
+    )
+      .skip(skip)
+      .limit(size);
+    res.status(200).send({
+      msg: "got user from searchProduct",
+      searchProduct,
+      total: totalSearch.length,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(401).send({ msg: "error from adminSearchProductList", error });
+  }
+};
+
 //========================================================
 
 const orderSearch = async (req, res) => {
@@ -190,13 +229,11 @@ const orderSearch = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
-    res
-      .status(200)
-      .send({
-        msg: "got orders from search",
-        total: total.length,
-        searchOrders,
-      });
+    res.status(200).send({
+      msg: "got orders from search",
+      total: total.length,
+      searchOrders,
+    });
   } catch (error) {
     console.log(error);
     res.status(401).send({ msg: "error from orderSearch", error });
@@ -212,4 +249,5 @@ module.exports = {
   adminProductList,
   orderSearch,
   searchUser,
+  adminSearchProductList,
 };

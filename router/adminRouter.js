@@ -11,8 +11,9 @@ router.get('/order-list', loginMiddleware, adminMiddleware, adminControlls.order
 router.delete('/user/:id', loginMiddleware, adminMiddleware, adminControlls.deleteUser  )
 router.post('/user/status/:id', loginMiddleware, adminMiddleware, adminControlls.userStatusUpdate  )
 router.post('/order/status/:oid', loginMiddleware, adminMiddleware, adminControlls.orderStatusUpdate  )
-router.get('/product-list', loginMiddleware, adminMiddleware, adminControlls.adminProductList  )
 router.get('/order-search', loginMiddleware, adminMiddleware, adminControlls.orderSearch  )
+router.get('/product-list', loginMiddleware, adminMiddleware, adminControlls.adminProductList  )
+router.get('/product-search', loginMiddleware, adminMiddleware, adminControlls.adminSearchProductList  )
 
 // admin authentication (for Private.jsx)
 router.get("/adminAuth", loginMiddleware, adminMiddleware, (req, res) => {

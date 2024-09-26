@@ -238,13 +238,16 @@ let deleteProduct = async (req, res) => {
 
 const orderCheckout = async (req, res) => {
   try {
-    const { cart } = req?.body;
+    const { cart, amount } = req?.body;
     let total = 0;
-    cart.map((item) => (total += item?.price));
+    cart.map((item) => (total += item?.price* amount[item._id]));
     let trxn_id = "DEMO" + uuidv4();
 
-    // let baseurl = "http://localhost:8000"; // has been changed after deployment
-    let baseurl = "https://mernecom-server.onrender.com"; // has been changed after deployment
+    // let baseurl = "http://localhost:8000";
+    // has been changed after deployment
+    let baseurl = process.env.BASE_URL; 
+    // has been changed after deployment
+    // let baseurl = "https://mernecom-server.onrender.com";
 
     const data = {
       total_amount: total,
@@ -295,6 +298,7 @@ const orderCheckout = async (req, res) => {
         payment: {
           trxn_id,
         },
+        amount,
         user: req.user._id,
       };
       OrderModel.create(order);

@@ -13,6 +13,9 @@ const orderSchema = new mongoose.Schema(
     trxn_id:{type:String},
     status:{type:Boolean, default:false}
     },
+    amount: {
+      type:Object,
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId, // or mongoose.ObjectId
       ref: "User", //collection name in mongoose.model('Category', categorySchema)

@@ -118,9 +118,11 @@ const userOrders = async (req, res) => {
    let page = req.query.page ? req.query.page : 1;
    let size = req.query.size ? req.query.size : 4;
    let skip = (page - 1) * size;
-   const total = await OrderModel.find({}).estimatedDocumentCount();
-   const orderList = await OrderModel.find({})
-     .populate("user", { password: 0, answer:0 })
+   const total = await OrderModel.find({
+     user: req.user._id,
+   });
+   const orderList = await OrderModel.find({ user: req.user._id })
+     .populate("user", { password: 0, answer: 0 })
      .skip(skip)
      .limit(size)
      .sort({ createdAt: -1 });
@@ -128,7 +130,7 @@ const userOrders = async (req, res) => {
    if (!orderList || orderList.length === 0) {
      return res.status(400).send({ msg: "No data found" });
    }
-   res.status(200).send({ orderList, total});
+   res.status(200).send({ orderList, total:total.length});
  } catch (error) {
    res.status(401).json({ msg: "error from userorders", error });
  }

@@ -92,13 +92,13 @@ const orderList = async (req, res) => {
       .populate("user", { password: 0 })
       .skip(skip)
       .limit(size)
-      .populate("products")
-      .populate({
-        path: "products",
-        populate: {
-          path: "category",
-        },
-      })
+      // .populate("products")
+      // .populate({
+      //   path: "products",
+      //   populate: {
+      //     path: "category",
+      //   },
+      // })
       .sort({ createdAt: -1 });
 
     if (!orderList || orderList.length === 0) {

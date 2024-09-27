@@ -39,7 +39,7 @@ const is_live = false //true for live, false for sandbox
 //============ error middleware
 app.use((err, req, res, next) => {
   if (err) {
-   res.status(500).send(err.message);
+   res.status(501).send(err.message);
   } else {
     res.send('success')
   }

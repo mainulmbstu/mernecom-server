@@ -10,12 +10,12 @@ const { ProductModel } = require("../models/productModel");
 const { CategoryModel } = require("../models/CategoryModel");
 const slugify = require("slugify");
 const { OrderModel } = require("../models/OrderModel");
-
+//==================================================
 const createProduct = async (req, res) => {
   try {
     const { name, description, category, price, quantity, shipping } = req.body;
     // const picture = req.file?.fieldname;
-    const picturePath = req.file?.path;
+    const picturePath = req.file?.path
     if (!name || !description || !category || !price || !quantity) {
       return res.status(400).send({ msg: "All fields are required" });
     }
@@ -46,7 +46,7 @@ const createProduct = async (req, res) => {
       .send({ msg: "product created successfully", success: true, product });
   } catch (error) {
     console.log(error);
-    res.status(500).send({ msg: "error from product create", error });
+    res.status(500).send({ msg: "error from product create, check file size and file type", error });
   }
 };
 
@@ -238,9 +238,9 @@ let deleteProduct = async (req, res) => {
 
 const orderCheckout = async (req, res) => {
   try {
-    const { cart, amount } = req?.body;
+    const { cart} = req?.body;
     let total = 0;
-    cart.map((item) => (total += item?.price* amount[item._id]));
+    cart.length && cart.map((item) => (total += item?.price* item.amount));
     let trxn_id = "DEMO" + uuidv4();
 
     // let baseurl = "http://localhost:8000";
@@ -298,7 +298,6 @@ const orderCheckout = async (req, res) => {
         payment: {
           trxn_id,
         },
-        amount,
         user: req.user._id,
       };
       OrderModel.create(order);

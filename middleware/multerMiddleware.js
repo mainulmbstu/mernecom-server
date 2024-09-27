@@ -44,10 +44,13 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 1000000 }, // in bytes
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'image/jpg'||'image/png') {
-      cb(null, true)
+    if (file.mimetype === "image/jpg"
+      || file.mimetype === "image/png"
+      || file.mimetype === "image/webp"
+    ) {
+      cb(null, true);
     } else {
-      cb(new Error("only jpg file allowed"));
+      cb(new Error("only jpg,png,webp file allowed"));
     }
   }
 });

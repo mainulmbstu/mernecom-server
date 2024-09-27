@@ -48,7 +48,7 @@ const login = async (req, res) => {
     }
       id = userExist._id;
     let token = await jwt.sign({ email, id }, process.env.JWT_KEY, {
-      expiresIn: "1d",
+      expiresIn: '1d',
     });
       let userInfo= await UserModel.findById(id, {password:0})
     res.status(200).send({ msg: "Login successfully", userInfo, token });
@@ -114,21 +114,40 @@ const userUpdate = async (req, res) => {
 
 //===========================================================================
 const userOrders = async (req, res) => {
-  try {
-    let orders = await OrderModel.find({ user: req.user._id })
-      .populate({
-        path: 'products',
-        populate:({
-          path: "category",
-          // model: "Category"
-          // collection name in model (Category)
-        })
-      })
-    .sort({createdAt:-1})
-    res.status(200).send({success:true, orders });
-  } catch (error) {
-    res.status(401).send({success:false, msg: "userControls, userOrders", error });
-  }
+ try {
+   let page = req.query.page ? req.query.page : 1;
+   let size = req.query.size ? req.query.size : 4;
+   let skip = (page - 1) * size;
+   const total = await OrderModel.find({}).estimatedDocumentCount();
+   const orderList = await OrderModel.find({})
+     .populate("user", { password: 0, answer:0 })
+     .skip(skip)
+     .limit(size)
+     .sort({ createdAt: -1 });
+
+   if (!orderList || orderList.length === 0) {
+     return res.status(400).send({ msg: "No data found" });
+   }
+   res.status(200).send({ orderList, total});
+ } catch (error) {
+   res.status(401).json({ msg: "error from userorders", error });
+ }
+
+  // try {
+  //   let orders = await OrderModel.find({ user: req.user._id })
+  //     .populate({
+  //       path: 'products',
+  //       populate:({
+  //         path: "category",
+  //         // model: "Category"
+  //         // collection name in model (Category)
+  //       })
+  //     })
+  //   .sort({createdAt:-1})
+  //   res.status(200).send({success:true, orders });
+  // } catch (error) {
+  //   res.status(401).send({success:false, msg: "userControls, userOrders", error });
+  // }
 };
 
 

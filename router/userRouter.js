@@ -12,6 +12,7 @@ router.patch("/forgotpassword", userControlls.forgotPasswod);
 router.get("/user", loginMiddleware, userControlls.loggedUser);
 router.post("/user/update", loginMiddleware, userControlls.userUpdate);
 router.get("/user/orders", loginMiddleware, userControlls.userOrders);
+router.get("/gallery", userControlls.gallery);
 
 // user authentication (for Private.jsx)
 router.get("/userAuth", loginMiddleware, (req, res) => {

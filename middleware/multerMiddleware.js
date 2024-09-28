@@ -13,7 +13,7 @@ const storage = multer.diskStorage({
   },
 });
 
-//=========for muili file
+//=========for multi file
 // const upload = multer({
 //   storage: storage,
 //   limits: { fileSize: 1000000 }, // in bytes
@@ -42,15 +42,16 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 1000000 }, // in bytes
+  limits: { fileSize: 4000000 }, // in bytes
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === "image/jpg"
+    if ( file.mimetype === "image/jpg"
       || file.mimetype === "image/png"
+      || file.mimetype === "image/jpeg"
       || file.mimetype === "image/webp"
     ) {
       cb(null, true);
     } else {
-      cb(new Error("only jpg,png,webp file allowed"));
+      cb(new Error("only jpg,png,webp files allowed"));
     }
   }
 });

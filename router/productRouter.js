@@ -6,7 +6,7 @@ const upload = require("../middleware/multerMiddleware");
 
 const router = express.Router();
 
-router.post('/create-product', upload.single('picture'), loginMiddleware, adminMiddleware, productControlls.createProduct)
+router.post('/create-product', loginMiddleware, adminMiddleware, upload.single('picture'), productControlls.createProduct)
 
 // router.get("/product-list", productControlls.productList);
 router.get("/category/:slug", productControlls.productByCategory);

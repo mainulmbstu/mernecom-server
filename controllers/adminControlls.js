@@ -1,6 +1,11 @@
 const { UserModel } = require("../models/userModel");
 const { OrderModel } = require("../models/OrderModel");
 const { ProductModel } = require("../models/productModel");
+const { GalleryModel } = require("../models/GalleryModel");
+const {
+  uploadOnCloudinary,
+  deleteImageOnCloudinary,
+} = require("../helper/cloudinary");
 
 const userList = async (req, res) => {
   try {
@@ -240,6 +245,47 @@ const orderSearch = async (req, res) => {
   }
 };
 
+//=================================================
+
+const gallery = async (req, res) => {
+
+  try {
+    const picturePath = req.files.map(file=>file.path)
+    // console.log(picturePath);
+    // const { secure_url, public_id } = await uploadOnCloudinary(
+    //   picturePath[1],
+    //   "gallery"
+    // ); // path and folder name as arguments
+    // if (!secure_url) {
+    //   return res
+    //     .status(500)
+    //     .send({ msg: "error uploading images", error: secure_url });
+    // }
+
+    let imageList = await GalleryModel.find({})
+
+    if (imageList.length === 0) {
+      let images = await GalleryModel.create({picture:picturePath} );
+      return res
+        .status(201)
+        .send({ msg: "images uploaded successfully", success: true, images });
+    }
+    totalImage = [...imageList[0]?.picture, ...picturePath]
+    let images = await GalleryModel.findByIdAndUpdate(imageList[0]?._id, {picture:totalImage}, {new:true}  );
+    res
+      .status(201)
+      .send({ msg: "images updated successfully", success: true, images });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .send({
+        msg: "error from gallery create",
+        error,
+      });
+  }
+};
+
 module.exports = {
   userList,
   deleteUser,
@@ -250,4 +296,5 @@ module.exports = {
   orderSearch,
   searchUser,
   adminSearchProductList,
+  gallery,
 };

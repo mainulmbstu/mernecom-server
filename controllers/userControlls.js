@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("../models/userModel");
 const { OrderModel } = require("../models/OrderModel");
+const { GalleryModel } = require("../models/GalleryModel");
 
 const home = async (req, res) => {
   try {
@@ -134,28 +135,27 @@ const userOrders = async (req, res) => {
  } catch (error) {
    res.status(401).json({ msg: "error from userorders", error });
  }
-
-  // try {
-  //   let orders = await OrderModel.find({ user: req.user._id })
-  //     .populate({
-  //       path: 'products',
-  //       populate:({
-  //         path: "category",
-  //         // model: "Category"
-  //         // collection name in model (Category)
-  //       })
-  //     })
-  //   .sort({createdAt:-1})
-  //   res.status(200).send({success:true, orders });
-  // } catch (error) {
-  //   res.status(401).send({success:false, msg: "userControls, userOrders", error });
-  // }
 };
 
-
-
-
-
+//===========================================================================
+const gallery = async (req, res) => {
+ try {
+   let page = req.query.page ? req.query.page : 1;
+   let size = req.query.size ? req.query.size : 4;
+   let skip = (page - 1) * size;
+   const total = await GalleryModel.find({});
+   const images = await GalleryModel.find({})
+     .skip(skip)
+     .limit(size)
+     .sort({ createdAt: -1 });
+   if (!images || images?.length === 0) {
+     return res.status(400).send({ msg: "No data found" });
+   }
+   res.status(200).send({ images, total: total[0]?.picture.length });
+ } catch (error) {
+   res.status(401).json({ msg: "error from GalleryModel", error });
+ }
+};
 
 
 module.exports = {
@@ -166,4 +166,5 @@ module.exports = {
   forgotPasswod,
   userUpdate,
   userOrders,
+  gallery,
 };

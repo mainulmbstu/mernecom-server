@@ -109,7 +109,7 @@ const userUpdate = async (req, res) => {
 let credential = {
   email,
   subject: "Update profile successful",
-  body: `<h2>Hi ${updateUser?.name},</h2>
+  body: `<h2>Hi ${updatedUser?.name},</h2>
       <h3>Your profile has been updated successfully. </h3>
       Thanks for staying with us`,
 };

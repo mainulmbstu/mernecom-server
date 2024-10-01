@@ -95,7 +95,7 @@ const userUpdate = async (req, res) => {
       answer: 0,
     });
     if (!user) {
-      return res.status(400).send({ msg: "No user found" });
+      return res.status(400).send({ msg: "No user found" })
     }
     //  let hashedPass= await bcrypt.hash(password, 10)
 

@@ -37,7 +37,17 @@ const register = async (req, res) => {
       address,
       answer,
     });
-    res.status(201).send({ msg: "Registered successfully" });
+
+let credential = {
+  email,
+  subject: "Register successful",
+  body: `<h2>Hi ${name},</h2>
+      <h3>You have been registered successfully. Your ID is ${newUser._id}. </h3>
+      Thanks for staying with us`,
+};
+mailer(credential);
+
+    res.status(201).send({ msg: `Registered successfully. An email has been sent to ${email}` });
   } catch (error) {
     console.log(error);
     res.status(500).send({ msg: "error from register", error });

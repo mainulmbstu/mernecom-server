@@ -1,15 +1,16 @@
-
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("../models/userModel");
 const { OrderModel } = require("../models/OrderModel");
 const { GalleryModel } = require("../models/GalleryModel");
+const otpGenerator = require("otp-generator");
+const mailer = require("../helper/nodeMailer");
 
 const home = async (req, res) => {
   try {
     await res.send("hello mern4");
   } catch (error) {
-      res.send(error);
+    res.send(error);
   }
 };
 
@@ -28,10 +29,17 @@ const register = async (req, res) => {
       return res.status(400).send({ msg: "Mobile number already exist" });
     }
     let hashedPass = await bcrypt.hash(password, 10);
-      const newUser = await UserModel.create({ name, email, password: hashedPass, phone, address, answer });
-      res.status(201).send({ msg: "Registered successfully" });
+    const newUser = await UserModel.create({
+      name,
+      email,
+      password: hashedPass,
+      phone,
+      address,
+      answer,
+    });
+    res.status(201).send({ msg: "Registered successfully" });
   } catch (error) {
-      console.log(error);
+    console.log(error);
     res.status(500).send({ msg: "error from register", error });
   }
 };
@@ -47,37 +55,22 @@ const login = async (req, res) => {
     if (!passMatch) {
       return res.status(400).send({ msg: "password not matched" });
     }
-      id = userExist._id;
+    id = userExist._id;
     let token = await jwt.sign({ email, id }, process.env.JWT_KEY, {
-      expiresIn: '1d',
+      expiresIn: "1d",
     });
-      let userInfo= await UserModel.findById(id, {password:0})
+    let userInfo = await UserModel.findById(id, { password: 0 });
     res.status(200).send({ msg: "Login successfully", userInfo, token });
   } catch (error) {
     res.status(500).send({ msg: "error from login", error });
   }
 };
-//======================================================================
-const forgotPasswod = async (req, res) => {
-  try {
-    const { email, answer, newPassword } = req.body;
-    const user = await UserModel.findOne({ email, answer })
-    if (!user) {
-      return res.status(404).send({msg:'Wrong email or answer'})
-    }
-    let hashedPass = await bcrypt.hash(newPassword, 10);
-    await UserModel.findByIdAndUpdate(user._id, { password: hashedPass })
-    res.status(200).send({ msg: "Password reset succesfully" });
-  } catch (error) {
-    res.status(500).send({ msg: "error from login", error });
-  }
-};
+
 //===========================================================================
 const loggedUser = async (req, res) => {
   try {
     let userData = req.user;
     res.status(200).send({ userData });
-
   } catch (error) {
     res.status(401).send({ msg: "userControls, user", error });
   }
@@ -85,8 +78,12 @@ const loggedUser = async (req, res) => {
 //============================================================
 const userUpdate = async (req, res) => {
   try {
-    const { id, name, email,password, phone, address } = req.body;
-    let user = await UserModel.findById(req.user._id, {password:0, role:0, answer:0});
+    const { id, name, email, password, phone, address } = req.body;
+    let user = await UserModel.findById(req.user._id, {
+      password: 0,
+      role: 0,
+      answer: 0,
+    });
     if (!user) {
       return res.status(400).send({ msg: "No user found" });
     }
@@ -112,50 +109,123 @@ const userUpdate = async (req, res) => {
   }
 };
 
-
 //===========================================================================
 const userOrders = async (req, res) => {
- try {
-   let page = req.query.page ? req.query.page : 1;
-   let size = req.query.size ? req.query.size : 4;
-   let skip = (page - 1) * size;
-   const total = await OrderModel.find({
-     user: req.user._id,
-   });
-   const orderList = await OrderModel.find({ user: req.user._id })
-     .populate("user", { password: 0, answer: 0 })
-     .skip(skip)
-     .limit(size)
-     .sort({ createdAt: -1 });
+  try {
+    let page = req.query.page ? req.query.page : 1;
+    let size = req.query.size ? req.query.size : 4;
+    let skip = (page - 1) * size;
+    const total = await OrderModel.find({
+      user: req.user._id,
+    });
+    const orderList = await OrderModel.find({ user: req.user._id })
+      .populate("user", { password: 0, answer: 0 })
+      .skip(skip)
+      .limit(size)
+      .sort({ createdAt: -1 });
 
-   if (!orderList || orderList.length === 0) {
-     return res.status(400).send({ msg: "No data found" });
-   }
-   res.status(200).send({ orderList, total:total.length});
- } catch (error) {
-   res.status(401).json({ msg: "error from userorders", error });
- }
+    if (!orderList || orderList.length === 0) {
+      return res.status(400).send({ msg: "No data found" });
+    }
+    res.status(200).send({ orderList, total: total.length });
+  } catch (error) {
+    res.status(401).json({ msg: "error from userorders", error });
+  }
 };
 
 //===========================================================================
 const gallery = async (req, res) => {
- try {
-   let page = req.query.page ? req.query.page : 1;
-   let size = req.query.size ? req.query.size : 4;
-   let skip = (page - 1) * size;
-   const total = await GalleryModel.find({});
-   const images = await GalleryModel.find({})
-     .skip(skip)
-     .limit(size)
-     .sort({ createdAt: -1 });
-   if (!images || images?.length === 0) {
-     return res.status(400).send({ msg: "No data found" });
-   }
-   res.status(200).send({ images, total: total[0]?.picture.length });
- } catch (error) {
-   res.status(401).json({ msg: "error from GalleryModel", error });
- }
+  try {
+    let page = req.query.page ? req.query.page : 1;
+    let size = req.query.size ? req.query.size : 4;
+    let skip = (page - 1) * size;
+    const total = await GalleryModel.find({});
+    const images = await GalleryModel.find({})
+      .skip(skip)
+      .limit(size)
+      .sort({ createdAt: -1 });
+    if (!images || images?.length === 0) {
+      return res.status(400).send({ msg: "No data found" });
+    }
+    res.status(200).send({ images, total: total[0]?.picture.length });
+  } catch (error) {
+    res.status(401).json({ msg: "error from GalleryModel", error });
+  }
 };
+
+//======================================================================
+const userVerified = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(400).send({ msg: "User not exist" });
+    }
+    req.app.locals.OTP = await otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      lowerCaseAlphabets: false,
+      specialChars: false,
+    });
+    let credential = {
+      email,
+      subject: "Password reset OTP",
+      body: `<h2>Hi ${user.name},</h2>
+      <h3>Your OTP is ${req.app.locals.OTP} with validity of 5 minutes. </h3>
+      Thanks for staying with us`,
+    };
+    mailer(credential);
+
+    req.app.locals.resetSession = true;
+    res
+      .status(201)
+      .send({ msg: `OTP has been sent to ${email}` });
+    //  OTP validity
+    setTimeout(() => {
+      req.app.locals.resetSession = false;
+    }, 300000);
+  } catch (error) {
+    res.status(500).send({ msg: "error from userVerified", error });
+  }
+};
+//======================================================================
+const OTPVerified = async (req, res) => {
+  try {
+    const { email, OTP } = req.body;
+    const userExist = await UserModel.findOne({ email });
+    if (!userExist) {
+      return res.status(400).send({ msg: "Input email" });
+    }
+    if (OTP !== req.app.locals.OTP) {
+      return res.status(400).send({ msg: "Wrong OTP" });
+    }
+
+    res.status(201).send({ msg: "OTP matched" });
+  } catch (error) {
+    res.status(500).send({ msg: "error from OTPVerified", error });
+  }
+};
+//======================================================================
+const ResetNewPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    const { email } = req.params;
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(400).send({ msg: "user not found" });
+    }
+    if (req.app.locals.resetSession !== true) {
+      return res.status(400).send({ msg: "Session expired, try again" });
+    }
+    let hashedPass = await bcrypt.hash(password, 10);
+    await UserModel.findByIdAndUpdate(user._id, { password: hashedPass });
+    res.status(200).send({ msg: "Password reset succesfully" });
+
+    req.app.locals.resetSession = false;
+  } catch (error) {
+    res.status(500).send({ msg: "error from ResetNewPassword", error });
+  }
+};
+//======================================================================
 
 
 module.exports = {
@@ -163,8 +233,10 @@ module.exports = {
   register,
   login,
   loggedUser,
-  forgotPasswod,
   userUpdate,
   userOrders,
   gallery,
+  userVerified,
+  OTPVerified,
+  ResetNewPassword,
 };

@@ -106,6 +106,15 @@ const userUpdate = async (req, res) => {
     if (password) user.password = await bcrypt.hash(password, 10);
     if (address) user.address = address;
     let updatedUser = await user.save();
+let credential = {
+  email,
+  subject: "Update profile successful",
+  body: `<h2>Hi ${updateUser?.name},</h2>
+      <h3>Your profile has been updated successfully. </h3>
+      Thanks for staying with us`,
+};
+mailer(credential);
+
     res.status(201).send({
       success: true,
       msg: "user updated successfully",

@@ -5,6 +5,7 @@ const { OrderModel } = require("../models/OrderModel");
 const { GalleryModel } = require("../models/GalleryModel");
 const otpGenerator = require("otp-generator");
 const mailer = require("../helper/nodeMailer");
+const localVariable = require("../middleware/LocalVariable");
 
 const home = async (req, res) => {
   try {
@@ -13,11 +14,11 @@ const home = async (req, res) => {
     res.send(error);
   }
 };
-
-const register = async (req, res) => {
+//============================================================
+const getOTP = async (req, res) => {
   try {
-    const { name, email, password, phone, address, answer } = req.body;
-    if (!name || !email || !password || !phone || !address || !answer) {
+    const { name, email, password, phone, address, regOTP } = req.body;
+    if (!name || !email || !password || !phone || !address) {
       return res.status(400).send({ msg: "All fields are required" });
     }
     const userExist = await UserModel.findOne({ email });
@@ -28,26 +29,73 @@ const register = async (req, res) => {
     if (mobileExist) {
       return res.status(400).send({ msg: "Mobile number already exist" });
     }
-    let hashedPass = await bcrypt.hash(password, 10);
-    const newUser = await UserModel.create({
-      name,
-      email,
-      password: hashedPass,
-      phone,
-      address,
-      answer,
+    req.app.locals.OTP = await otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      lowerCaseAlphabets: false,
+      specialChars: false,
     });
+    let credential = {
+      email,
+      subject: "Register OTP",
+      body: `<h2>Hi ${name},</h2>
+      <h3>Your registration OTP is ${req.app.locals.OTP}. You can use it only once. </h3>
+      Thanks for staying with us`,
+    };
+    mailer(credential);
+    req.app.locals.resetSession = true;
 
-let credential = {
-  email,
-  subject: "Register successful",
-  body: `<h2>Hi ${name},</h2>
+    res.status(201).send({
+      msg: `OTP has been sent to ${email}`,
+      OTP: req.app.locals.OTP,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ msg: "error from register", error });
+  }
+};
+//============================================================
+const register = async (req, res) => {
+  try {
+    const { name, email, password, phone, address, regOTP } = req.body;
+    if (!name || !email || !password || !phone || !address) {
+      return res.status(400).send({ msg: "All fields are required" });
+    }
+    const userExist = await UserModel.findOne({ email });
+    if (userExist) {
+      return res.status(400).send({ msg: "User already exist" });
+    }
+    const mobileExist = await UserModel.findOne({ phone });
+    if (mobileExist) {
+      return res.status(400).send({ msg: "Mobile number already exist" });
+    }
+    if (regOTP !== req.app.locals.OTP) {
+      req.app.locals.OTP = null;
+      return res.status(400).send({ msg: "Wrong OTP" });
+    }
+    
+    if (regOTP === req.app.locals.OTP && req.app.locals.resetSession === true) {
+      let hashedPass = await bcrypt.hash(password, 10);
+      const newUser = await UserModel.create({
+        name,
+        email,
+        password: hashedPass,
+        phone,
+        address,
+      });
+      req.app.locals.resetSession = false;
+      let credential = {
+        email,
+        subject: "Registration successful",
+        body: `<h2>Hi ${name},</h2>
       <h3>You have been registered successfully. Your ID is ${newUser._id}. </h3>
       Thanks for staying with us`,
-};
-mailer(credential);
+      };
+      mailer(credential);
 
-    res.status(201).send({ msg: `Registered successfully. An email has been sent to ${email}` });
+      res.status(201).send({
+        msg: `Congratulation !! Registration successful.`,
+      });
+    }
   } catch (error) {
     console.log(error);
     res.status(500).send({ msg: "error from register", error });
@@ -95,7 +143,7 @@ const userUpdate = async (req, res) => {
       answer: 0,
     });
     if (!user) {
-      return res.status(400).send({ msg: "No user found" })
+      return res.status(400).send({ msg: "No user found" });
     }
     //  let hashedPass= await bcrypt.hash(password, 10)
 
@@ -106,14 +154,14 @@ const userUpdate = async (req, res) => {
     if (password) user.password = await bcrypt.hash(password, 10);
     if (address) user.address = address;
     let updatedUser = await user.save();
-let credential = {
-  email,
-  subject: "Update profile successful",
-  body: `<h2>Hi ${updatedUser?.name},</h2>
+    let credential = {
+      email,
+      subject: "Update profile successful",
+      body: `<h2>Hi ${updatedUser?.name},</h2>
       <h3>Your profile has been updated successfully. </h3>
       Thanks for staying with us`,
-};
-mailer(credential);
+    };
+    mailer(credential);
 
     res.status(201).send({
       success: true,
@@ -195,9 +243,7 @@ const userVerified = async (req, res) => {
     mailer(credential);
 
     req.app.locals.resetSession = true;
-    res
-      .status(201)
-      .send({ msg: `OTP has been sent to ${email}` });
+    res.status(201).send({ msg: `OTP has been sent to ${email}` });
     //  OTP validity
     setTimeout(() => {
       req.app.locals.resetSession = false;
@@ -246,7 +292,6 @@ const ResetNewPassword = async (req, res) => {
 };
 //======================================================================
 
-
 module.exports = {
   home,
   register,
@@ -258,4 +303,5 @@ module.exports = {
   userVerified,
   OTPVerified,
   ResetNewPassword,
+  getOTP,
 };

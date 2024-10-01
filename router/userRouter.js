@@ -7,6 +7,7 @@ const localVariable = require("../middleware/LocalVariable");
 const router = express.Router();
 
 router.get("/", userControlls.home);
+router.post("/getotp",localVariable, userControlls.getOTP);
 router.post("/register", userControlls.register);
 router.post("/login", userControlls.login);
 router.get("/user", loginMiddleware, userControlls.loggedUser);

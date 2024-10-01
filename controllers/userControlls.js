@@ -137,10 +137,13 @@ const loggedUser = async (req, res) => {
 const userUpdate = async (req, res) => {
   try {
     const { id, name, email, password, phone, address } = req.body;
+     const mobileExist = await UserModel.findOne({ phone });
+     if (mobileExist) {
+       return res.status(400).send({ msg: "Mobile number already exist" });
+     }
     let user = await UserModel.findById(req.user._id, {
       password: 0,
       role: 0,
-      answer: 0,
     });
     if (!user) {
       return res.status(400).send({ msg: "No user found" });
@@ -186,7 +189,7 @@ const userOrders = async (req, res) => {
       user: req.user._id,
     });
     const orderList = await OrderModel.find({ user: req.user._id })
-      .populate("user", { password: 0, answer: 0 })
+      .populate("user", { password: 0, })
       .skip(skip)
       .limit(size)
       .sort({ createdAt: -1 });

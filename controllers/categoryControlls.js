@@ -54,10 +54,15 @@ let deleteCategory = async (req, res) => {
 //======================================
 const categoryList = async (req, res) => {
   try {
-    const categoryList = await CategoryModel.find({}).sort({updatedAt:-1});
-    if (!categoryList || categoryList.length === 0) {
+    const category = await CategoryModel.find({})
+    if (!category || category?.length === 0) {
       return res.status(400).send("No data found");
     }
+     let categoryList = category.sort((a, b) => {
+       a = a.name.toLowerCase();
+       b = b.name.toLowerCase();
+       return a > b ? 1 : -1;
+     });
     res.status(200).send(categoryList);
   } catch (error) {
     res.status(401).json({ msg: "error from category List", error });

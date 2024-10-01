@@ -30,7 +30,6 @@ const loginMiddleware = async (req, res, next) => {
      return next()
     }
     req.user = userData;
-    // req.tokenData=tokenData
     next();
   } catch (error) {
     res.status(401).json({ msg: "checkLogin", error });

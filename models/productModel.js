@@ -18,10 +18,12 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
-    picture: {
-      secure_url: { type: String, required: true },
-      public_id: { type: String, required: true },
-    },
+    picture: {type:Array, required:true},
+
+    // picture: {
+    //   secure_url: { type: String, required: true },
+    //   public_id: { type: String, required: true },
+    // },
     shipping: { type: Boolean},
     amount: { type: Number, default:1},
   },

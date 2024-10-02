@@ -15,21 +15,23 @@ const createProduct = async (req, res) => {
   try {
     const { name, description, category, price, quantity, shipping } = req.body;
     // const picture = req.file?.fieldname;
-    const picturePath = req.file?.path
+    // console.log(req.files);
+    const pictures = req.files
     if (!name || !description || !category || !price || !quantity) {
       return res.status(400).send({ msg: "All fields are required" });
     }
-
-    const { secure_url, public_id } = await uploadOnCloudinary(
-      picturePath,
-      "products"
-    ); // path and folder name as arguments
+    let picturePaths = await pictures.length && pictures.map(pic => pic.path)
+    
+    let links = [];
+     for(spath of picturePaths) {
+  const { secure_url, public_id } =await uploadOnCloudinary(spath,"products"); // path and folder name as arguments
+      links = [...links, { secure_url, public_id }];      
     if (!secure_url) {
       return res
         .status(500)
         .send({ msg: "error uploading image", error: secure_url });
     }
-
+}
     let product = await ProductModel.create({
       name,
       slug: slugify(name),
@@ -38,7 +40,7 @@ const createProduct = async (req, res) => {
       price,
       quantity,
       user: req.user?._id,
-      picture: { secure_url, public_id },
+      picture:links,
       shipping,
     });
     res
@@ -49,6 +51,45 @@ const createProduct = async (req, res) => {
     res.status(500).send({ msg: "error from product create, check file size and file type", error });
   }
 };
+// //==================================================
+// const createProduct = async (req, res) => {
+//   try {
+//     const { name, description, category, price, quantity, shipping } = req.body;
+//     // const picture = req.file?.fieldname;
+//     const picturePath = req.file?.path
+//     if (!name || !description || !category || !price || !quantity) {
+//       return res.status(400).send({ msg: "All fields are required" });
+//     }
+
+//     const { secure_url, public_id } = await uploadOnCloudinary(
+//       picturePath,
+//       "products"
+//     ); // path and folder name as arguments
+//     if (!secure_url) {
+//       return res
+//         .status(500)
+//         .send({ msg: "error uploading image", error: secure_url });
+//     }
+
+//     let product = await ProductModel.create({
+//       name,
+//       slug: slugify(name),
+//       description,
+//       category,
+//       price,
+//       quantity,
+//       user: req.user?._id,
+//       picture: { secure_url, public_id },
+//       shipping,
+//     });
+//     res
+//       .status(201)
+//       .send({ msg: "product created successfully", success: true, product });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).send({ msg: "error from product create, check file size and file type", error });
+//   }
+// };
 
 //=========================================
 const productByCategory = async (req, res) => {

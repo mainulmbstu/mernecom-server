@@ -22,7 +22,7 @@ router.get("/search", productControlls.productSearch);
 //simila products
 router.get("/search/similar/:pid/:cid", productControlls.similarProducts);
 
-router.post('/update-product/:pid', upload.single('picture'), loginMiddleware, adminMiddleware, productControlls.updateProduct)
+router.post('/update-product/:pid', loginMiddleware, adminMiddleware, upload.array('picture',20), productControlls.updateProduct)
 
 router.delete('/delete-product/:pid', loginMiddleware, adminMiddleware, productControlls.deleteProduct)
 

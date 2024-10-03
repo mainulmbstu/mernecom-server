@@ -14,7 +14,6 @@ const { OrderModel } = require("../models/OrderModel");
 const createProduct = async (req, res) => {
   try {
     const { name, description, category, price, quantity, shipping } = req.body;
-    // const picture = req.file?.fieldname;
     // console.log(req.files);
     const pictures = req.files
     if (!name || !description || !category || !price || !quantity) {
@@ -51,6 +50,7 @@ const createProduct = async (req, res) => {
     res.status(500).send({ msg: "error from product create, check file size and file type", error });
   }
 };
+
 // //==================================================
 // const createProduct = async (req, res) => {
 //   try {
@@ -90,7 +90,116 @@ const createProduct = async (req, res) => {
 //     res.status(500).send({ msg: "error from product create, check file size and file type", error });
 //   }
 // };
+//======================================
 
+const updateProduct = async (req, res) => {
+  try {
+    let pid = req.params.pid;
+    const { name, description, category, price, quantity, shipping } = req.body;
+    // const picture = req.file?.fieldname;
+    const pictures = req.files;
+    let product = await ProductModel.findById(pid);
+    if (!product) {
+      return res.status(400).send({ msg: "No data found" });
+    }
+
+    if (name) product.name = name;
+    if (name) product.slug = slugify(name);
+    if (description) product.description = description;
+    if (category) product.category = category;
+    if (price) product.price = price;
+    if (quantity) product.quantity = quantity;
+    if (shipping) product.shipping = shipping;
+
+
+    // upload and delete image on cloudinary
+   let picturePaths = await pictures.length && pictures.map((pic) => pic.path);
+    
+      let links = [];
+    if (picturePaths.length) {
+       for (spath of picturePaths) {
+         const { secure_url, public_id } = await uploadOnCloudinary(
+           spath,
+           "products"
+         ); // path and folder name as arguments
+         links = [...links, { secure_url, public_id }];
+         if (!secure_url) {
+           return res
+             .status(500)
+             .send({ msg: "error uploading image", error: secure_url });
+         }
+      }
+      
+      if (product?.picture?.length && product?.picture[0].public_id) {
+        let publicPaths =await product.picture.map((pic) => pic.public_id);
+        for (dpath of publicPaths) {
+          await deleteImageOnCloudinary(dpath);
+        }
+      }
+
+      product.picture = links
+    }
+
+
+
+    let updatedProduct = await product.save();
+    res.status(201).send({
+      success: true,
+      msg: "product updated successfully",
+      updatedProduct,
+    });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .send({ success: false, msg: "error from product update", error });
+  }
+};
+// const updateProduct = async (req, res) => {
+//   try {
+//     let pid = req.params.pid;
+//     const { name, description, category, price, quantity, shipping } = req.body;
+//     // const picture = req.file?.fieldname;
+//     const picturePath = req.file?.path;
+//     let product = await ProductModel.findById(pid);
+//     if (!product) {
+//       return res.status(400).send({ msg: "No data found" });
+//     }
+
+//     if (name) product.name = name;
+//     if (name) product.slug = slugify(name);
+//     if (description) product.description = description;
+//     if (category) product.category = category;
+//     if (price) product.price = price;
+//     if (quantity) product.quantity = quantity;
+//     if (shipping) product.shipping = shipping;
+
+//     // upload and delete image on cloudinary
+//     if (picturePath) {
+//       let { secure_url, public_id } = await uploadOnCloudinary(
+//         picturePath,
+//         "products"
+//       );
+//       if (product.picture && product.picture.public_id) {
+//         await deleteImageOnCloudinary(product.picture.public_id);
+//       }
+
+//       product.picture = { secure_url, public_id };
+//     }
+
+//     let updatedProduct = await product.save();
+//     res.status(201).send({
+//       success: true,
+//       msg: "product updated successfully, refresh to view",
+//       updatedProduct,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     res
+//       .status(500)
+//       .send({ success: false, msg: "error from product update", error });
+//   }
+// };
 //=========================================
 const productByCategory = async (req, res) => {
   try {
@@ -210,53 +319,7 @@ const singleProduct = async (req, res) => {
     res.status(401).json({ msg: "error from singleProduct", error });
   }
 };
-//======================================
 
-const updateProduct = async (req, res) => {
-  try {
-    let pid = req.params.pid;
-    const { name, description, category, price, quantity, shipping } = req.body;
-    // const picture = req.file?.fieldname;
-    const picturePath = req.file?.path;
-    let product = await ProductModel.findById(pid);
-    if (!product) {
-      return res.status(400).send({ msg: "No data found" });
-    }
-
-    if (name) product.name = name;
-    if (name) product.slug = slugify(name);
-    if (description) product.description = description;
-    if (category) product.category = category;
-    if (price) product.price = price;
-    if (quantity) product.quantity = quantity;
-    if (shipping) product.shipping = shipping;
-
-    // upload and delete image on cloudinary
-    if (picturePath) {
-      let { secure_url, public_id } = await uploadOnCloudinary(
-        picturePath,
-        "products"
-      );
-      if (product.picture && product.picture.public_id) {
-        await deleteImageOnCloudinary(product.picture.public_id);
-      }
-
-      product.picture = { secure_url, public_id };
-    }
-
-    let updatedProduct = await product.save();
-    res.status(201).send({
-      success: true,
-      msg: "product updated successfully, refresh to view",
-      updatedProduct,
-    });
-  } catch (error) {
-    console.log(error);
-    res
-      .status(500)
-      .send({ success: false, msg: "error from product update", error });
-  }
-};
 //=================================================================
 let deleteProduct = async (req, res) => {
   try {
@@ -265,9 +328,13 @@ let deleteProduct = async (req, res) => {
     if (!deleteItem) {
       return res.status(400).send({ msg: "No data found" });
     }
-    if (deleteItem.picture && deleteItem.picture.public_id) {
-      await deleteImageOnCloudinary(deleteItem.picture.public_id);
+    if (deleteItem.picture?.length && deleteItem.picture[0].public_id) {
+      let publicPaths = await deleteItem?.picture?.map((pic) => pic.public_id);
+       for (dpath of publicPaths) {
+         await deleteImageOnCloudinary(dpath);
+       }
     }
+
     await ProductModel.findByIdAndDelete(pid);
     res.status(200).send({ msg: "Product deleted successfully" });
   } catch (error) {

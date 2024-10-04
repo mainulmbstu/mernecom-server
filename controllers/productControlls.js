@@ -17,7 +17,7 @@ const createProduct = async (req, res) => {
     // console.log(req.files);
     const pictures = req.files
     if (!name || !description || !category || !price || !quantity) {
-      return res.status(400).send({ msg: "All fields are required" });
+      return res.status(400).send({ msg: "All fields are required" })
     }
     let picturePaths = await pictures.length && pictures.map(pic => pic.path)
     

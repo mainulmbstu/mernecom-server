@@ -265,7 +265,7 @@ const gallery = async (req, res) => {
     let imageList = await GalleryModel.find({})
 
     if (imageList.length === 0) {
-      let images = await GalleryModel.create({picture:picturePath} );
+      let images = await GalleryModel.create({picture:picturePath} )
       return res
         .status(201)
         .send({ msg: "images uploaded successfully", success: true, images });

@@ -224,7 +224,7 @@ const moreInfo = async (req, res) => {
   try {
     const { pid } = req.params;
     const products = await ProductModel.find({ _id: pid }).populate("category");
-    res.status(200).send({ msg: "got product moreInfo", products:products[0] });
+    res.status(200).json({ msg: "got product moreInfo", products:products[0] });
   } catch (error) {
     console.log(error);
     res.status(401).send({ msg: "error from moreInfo", error });

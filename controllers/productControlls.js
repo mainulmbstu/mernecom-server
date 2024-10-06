@@ -236,12 +236,17 @@ const productSearch = async (req, res) => {
   try {
     const { keyword, page, size } = req.query;
     let skip = (page - 1) * size;
-    const total = await ProductModel.find({
+    const totalProd = await ProductModel.find({
       $or: [
         { name: { $regex: keyword, $options: "i" } },
         { description: { $regex: keyword, $options: "i" } },
       ],
+    })
+    const totalCat = await CategoryModel.find({
+      name: { $regex: keyword, $options: "i" },
     });
+
+    console.log(totalCat);
     const products = await ProductModel.find({
       $or: [
         { name: { $regex: keyword, $options: "i" } },
@@ -254,7 +259,7 @@ const productSearch = async (req, res) => {
       .sort({ updatedAt: -1 });
     res
       .status(200)
-      .send({ msg: "got product from search", products, total: total.length });
+      .send({ msg: "got product from search", products,  });
   } catch (error) {
     console.log(error);
     res.status(401).send({ msg: "error from productSearch", error });

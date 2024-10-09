@@ -286,6 +286,7 @@ const similarProducts = async (req, res) => {
 const productFilter = async (req, res) => {
   try {
     const { checkedCat, priceCat, pageOrSize } = req.body;
+    // const { checkedCat, priceCat, pageOrSize } = req.body;
     let page = pageOrSize?.page;
     let size = pageOrSize?.size;
     let skip = (page - 1) * size;

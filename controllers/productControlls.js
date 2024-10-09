@@ -262,7 +262,7 @@ const productSearch = async (req, res) => {
       .send({ msg: "got product from search", products,  });
   } catch (error) {
     console.log(error);
-    res.status(401).send({ msg: "error from productSearch", error });
+    res.status(401).send({ msg: "error from productSearch", error })
   }
 };
 //===============================================================
